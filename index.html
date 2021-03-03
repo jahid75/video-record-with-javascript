@@ -1,0 +1,84 @@
+<html>
+<body>
+<style>
+    html, body {
+        margin: 0!important;
+        padding: 0!important;
+    }
+</style>
+
+<title>Video Play/Record Test v0.02</title>
+<h1>Invincible webcam test playground</h1>
+<br>
+
+<button id="btn-start-recording">Record</button>
+<button id="btn-stop-recording" disabled>Stop</button>
+
+<hr>
+<video controls autoplay playsinline></video>
+
+<script src="script.js"></script>
+<script>
+var video = document.querySelector('video');
+var constraints = {
+    audio: true,
+        video: {
+        width: 320,
+        height: 240,
+        frameRate: {
+            ideal: 60,
+            min: 10
+        }
+    }
+}
+
+function captureCamera(callback) {
+	navigator.mediaDevices.getUserMedia(constraints).then(function(camera) {
+        callback(camera);
+    }).catch(function(error) {
+        alert('Unable to capture your camera. Please check console logs.');
+        console.error(error);
+    });
+}
+
+function stopRecordingCallback() {
+    video.src = video.srcObject = null;
+    video.muted = false;
+    video.volume = 1;
+    video.src = URL.createObjectURL(recorder.getBlob());
+    
+    recorder.camera.stop();
+    recorder.destroy();
+    recorder = null;
+}
+
+var recorder; // globally accessible
+
+document.getElementById('btn-start-recording').onclick = function() {
+    //this.disabled = true;
+    captureCamera(function(camera) {
+        video.muted = true;
+        video.volume = 0;
+        video.srcObject = camera;
+
+        recorder = RecordRTC(camera, {
+            type: 'video'
+        });
+
+        recorder.startRecording();
+
+        // release camera on stopRecording
+        recorder.camera = camera;
+
+        document.getElementById('btn-stop-recording').disabled = false;
+    });
+};
+
+document.getElementById('btn-stop-recording').onclick = function() {
+    //this.disabled = true;
+    recorder.stopRecording(stopRecordingCallback);
+};
+</script>
+<iframe width="686" height="386" src="https://www.youtube.com/embed/-bfAVpuko5o?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
